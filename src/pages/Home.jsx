@@ -3,9 +3,18 @@ import React, { useEffect, useRef, useState } from 'react';
 const Home = () => {
     const showcaseSectionRef = useRef(null);
     const offersSectionRef = useRef(null);
+    const scrollRef = useRef(null);
     const [scrollY, setScrollY] = useState(0);
-    const [showcaseParallax, setShowcaseParallax] = useState({ left: 0, right: 0 });
-    const [morphProgress, setMorphProgress] = useState(1);
+    const [isPaused, setIsPaused] = useState(false);
+
+    const showcaseImages = [
+        { id: 1, className: 'ktv-room-1', image: 'https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/fdf9b8173161499.648b44b344490.jpg', alt: 'KTV Room 1' },
+        { id: 2, className: 'game-room-1', image: 'https://image.benq.com/is/image/benqco/Gamingroom_tk700sti-A', alt: 'Game Room 1' },
+        { id: 3, className: 'movie-room-1', image: 'https://cdn.mos.cms.futurecdn.net/ifycXFxFrobEJng59xnQB5.jpg', alt: 'Movie Room 1' },
+        { id: 4, className: 'ktv-room-2', image: 'https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/fdf9b8173161499.648b44b344490.jpg', alt: 'KTV Room 2' },
+        { id: 5, className: 'game-room-2', image: 'https://image.benq.com/is/image/benqco/Gamingroom_tk700sti-A', alt: 'Game Room 2' },
+        { id: 6, className: 'movie-room-2', image: 'https://cdn.mos.cms.futurecdn.net/ifycXFxFrobEJng59xnQB5.jpg', alt: 'Movie Room 2' },
+    ];
 
     useEffect(() => {
         const handleScroll = () => {
@@ -18,12 +27,6 @@ const Home = () => {
                 const scrollProgress = (currentScroll - sectionTop) / window.innerHeight;
 
                 if (scrollProgress >= -0.5 && scrollProgress <= 0.5) {
-                    const parallaxAmount = scrollProgress * 100;
-                    setShowcaseParallax({
-                        left: parallaxAmount * 0.3,
-                        right: -parallaxAmount * 0.3
-                    });
-
                     const newProgress = Math.max(0, Math.min(1, 1 - Math.abs(scrollProgress) * 2));
                     setMorphProgress(newProgress);
                 }
@@ -40,11 +43,23 @@ const Home = () => {
         };
     }, []);
 
-    const getMorphPath = (progress) => {
-        const curveIntensity = 100 * (1 - progress);
-        return `M0,100 C300,${curveIntensity} 900,${curveIntensity} 1200,100`;
-    };
+    useEffect(() => {
+        const scrollContainer = scrollRef.current;
+        if (!scrollContainer || isPaused) return;
 
+        const scroll = () => {
+            if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) {
+                scrollContainer.scrollLeft = 0;
+            } else {
+                scrollContainer.scrollLeft += 1;
+            }
+        };
+
+        const interval = setInterval(scroll, 20);
+        return () => clearInterval(interval);
+    }, [isPaused]);
+
+   
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white">
             <header className="fixed top-0 left-0 w-full flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 md:py-6 bg-[#8b1a1a]/90 backdrop-blur-md z-50 transition-all duration-500">
@@ -54,11 +69,11 @@ const Home = () => {
                 </a>
 
                 <nav className="hidden md:flex items-center gap-6 lg:gap-10">
-                    {["Offer", "Rates", "Services", "About"].map((item) => (
+                    {["Offers", "Rates", "Services", "About"].map((item) => (
                         <a
                             key={item}
                             href="#"
-                            className="group flex flex-col gap-0.5 text-white font-sans text-base"
+                            className="group flex flex-col gap-0.5 text-white font-sans text-lg"
                         >
                             {item}
                             <div className="bg-white h-0.5 w-0 group-hover:w-full transition-all duration-300"></div>
@@ -111,7 +126,6 @@ const Home = () => {
                 <div className="absolute inset-0 bg-black opacity-40 z-0"></div>
             </section>
 
-
             <section ref={showcaseSectionRef} className="relative bg-[#0a0a0a] overflow-hidden">
                 <div className="absolute top-0 left-0 w-full overflow-hidden h-16 z-20">
                     <svg viewBox="0 0 1200 100" preserveAspectRatio="none" className="w-full h-full fill-[#0a0a0a]">
@@ -119,40 +133,32 @@ const Home = () => {
                     </svg>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 pt-16 relative z-10">
-                    <div className="relative h-[600px] overflow-hidden">
-                        <img
-                            src="https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/fdf9b8173161499.648b44b344490.jpg"
-                            alt="KTV Room"
-                            className="w-full h-full object-cover transition-transform duration-150 ease-out"
-                            style={{
-                                transform: `translateX(${showcaseParallax.left}px) scale(1.05)`,
-                            }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
-                    </div>
-
-                    <div className="relative h-[600px] overflow-hidden">
-                        <img
-                            src="https://image.benq.com/is/image/benqco/Gamingroom_tk700sti-A"
-                            alt="Game Room"
-                            className="w-full h-full object-cover transition-transform duration-150 ease-out"
-                            style={{
-                                transform: `translateX(${showcaseParallax.right}px) scale(1.05)`,
-                            }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent"></div>
+                <div className="pt-16 pb-0 relative z-10">
+                    <div 
+                        ref={scrollRef}
+                        className="overflow-hidden whitespace-nowrap"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                        <div className="inline-flex gap-6">
+                            {[...showcaseImages, ...showcaseImages].map((image, index) => (
+                                <div
+                                    key={`${image.id}-${index}`}
+                                    className={`${image.className} inline-block w-[600px] h-[600px] overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer`}
+                                    onMouseEnter={() => setIsPaused(true)}
+                                    onMouseLeave={() => setIsPaused(false)}
+                                >
+                                    <img 
+                                        src={image.image} 
+                                        alt={image.alt}
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full overflow-hidden h-16 z-20 pointer-events-none">
-                    <svg viewBox="0 0 1200 100" preserveAspectRatio="none" className="w-full h-full fill-[#0a0a0a]">
-                        <path
-                            d={getMorphPath(morphProgress)}
-                        />
-                        <path d="L1200,0 L0,0 Z" />
-                    </svg>
-                </div>
             </section>
 
             <section ref={offersSectionRef} className="py-24 px-8 bg-[#0a0a0a]">
@@ -277,7 +283,7 @@ const Home = () => {
                 </div>
             </section>
 
-            <section className="py-24 px-8 bg-[#8b1a1a]">
+            <section className="py-24 px-8 bg-[Black]">
                 <div className="max-w-7xl mx-auto text-center">
                     <h2 className="text-5xl font-sans font-bold mb-6 text-white transition-all duration-700"
                         style={{
@@ -326,7 +332,7 @@ const Home = () => {
                 </div>
             </section>
 
-            <footer className="py-8 px-8 bg-[#8b1a1a] text-center text-gray-300">
+            <footer className="py-8 px-8 bg-[#8b1a1a]/90 backdrop-blur-md text-center text-gray-300">
                 <p className="text-sm font-sans">
                     Cynergy Ent. 2025. All rights reserved.
                 </p>
